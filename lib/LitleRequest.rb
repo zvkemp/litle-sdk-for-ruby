@@ -159,6 +159,46 @@ module LitleOnline
       end
     end
 
+    def get_merchant_id(options)
+      options['merchantId'] || @config_hash['currency_merchant_map']['DEFAULT']
+    end
+    
+    class LitleResponse
+      attr_accessor :RFRResponse
+    end
+    
+    class RFRResponse
+      attr_accessor :response
+      attr_accessor :message
+    end
+    
+    def account_updater_request_for_response(options)
+      #request = LitleOnline::LitleRequest.new
+      path = Dir.pwd
+      create_new_litle_request(path)
+      @num_batch_requests = 0
+     # batch = LitleRFRRequest.new
+      unless options['merchantId']
+        options.merge!({'merchantId' => get_merchant_id(options)})
+      end
+      add_rfr_request(options)
+       
+      #send the batch files at the given directory over fastBatch and save the responses
+      send_to_litle_stream
+      
+      process_responses({:transaction_listener => LitleOnline::DefaultLitleListener.new do |transaction|
+        type = transaction["type"]
+        if(type == "RFRResponse") then
+          litleResponse = LitleResponse.new
+          rfrResponse = RFRResponse.new
+          rfrResponse.response = transaction['response']
+          rfrResponse.message = transaction['message']
+          litleResponse.RFRResponse = rfrResponse
+          return litleResponse
+        end 
+      end})
+    end
+    
     # Adds an RFRRequest to the LitleRequest.
     # params: 
     # +options+:: a required +Hash+ containing configuration info for the RFRRequest. If the RFRRequest is for a batch, then the 
@@ -166,11 +206,10 @@ module LitleOnline
     # as key/val pairs.
     # +path+:: optional path to save the new litle request containing the RFRRequest at
     def add_rfr_request(options, path = (File.dirname(@path_to_batches)))
-     
       rfrrequest = LitleRFRRequest.new
-      if(options['litleSessionId'] != nil) then
+      if(options['litleSessionId']) then
         rfrrequest.litleSessionId = options['litleSessionId']
-      elsif(options['merchantId'] != nil and options['postDay'] != nil) then
+      elsif(options['merchantId'] and options['postDay']) then
         accountUpdate = AccountUpdateFileRequestData.new
         accountUpdate.merchantId = options['merchantId']
         accountUpdate.postDay = options['postDay']
@@ -296,21 +335,28 @@ module LitleOnline
       Dir.foreach(path) do |filename|
         if((filename =~ /request_\d+.complete\z/) != nil) then
           begin 
-            socket = Socket.new( AF_INET, SOCK_STREAM, 0 )
-            sockaddr = Socket.pack_sockaddr_in( port.to_i, url )
-            socket.connect( sockaddr )
+            socket = TCPSocket.open(url,port.to_i)
+            ssl_context = OpenSSL::SSL::SSLContext.new()
+            ssl_context.ssl_version = :SSLv23
+            ssl_socket = OpenSSL::SSL::SSLSocket.new(socket, ssl_context)
+            ssl_socket.sync_close = true
+            ssl_socket.connect
            rescue => e 
             raise "A connection couldn't be established. Are you sure you have the correct credentials? Exception: " + e.message
            end 
             
             File.foreach(path + filename) do |li|
-              socket.write(li)
+              #li = '<litleRequest numBatchRequests="1" version="8.23" xmlns="http://www.litle.com/schema"><authentication><user>u819799347608289305</user><password>iCgtXMvHj7x54ao</password></authentication><batchRequest merchantId="07103610" merchantSdk="PHP;8.23.0" authAmount="0" numAuths="0" saleAmount="10010" numSales="1" creditAmount="0" numCredits="0" numTokenRegistrations="0" captureGivenAuthAmount="0" numCaptureGivenAuths="0" forceCaptureAmount="0" numForceCaptures="0" authReversalAmount="0" numAuthReversals="0" captureAmount="0" numCaptures="0" echeckVerificationAmount="0" numEcheckVerification="0" echeckCreditAmount="0" numEcheckCredit="0" numEcheckRedeposit="0" echeckSalesAmount="0" numEcheckSales="0" numUpdateCardValidationNumOnTokens="0" numUpdateSubscriptions="0" numCancelSubscriptions="0" numCreatePlans="0" numUpdatePlans="0" numActivates="0" activateAmount="0" numDeactivates="0" numLoads="0" loadAmount="0" numUnloads="0" unloadAmount="0" numBalanceInquirys="0" numAccountUpdates="0"><sale reportGroup="Planets"><orderId>1864</orderId><amount>10010</amount><orderSource>ecommerce</orderSource><billToAddress><name>John Smith</name><addressLine1>1 Main St.</addressLine1><city>Burlington</city><state>MA</state><zip>01803-3747</zip><country>US</country></billToAddress><card><type>VI</type><number>4457010000000009</number><expDate>0112</expDate><cardValidationNum>349</cardValidationNum></card></sale></batchRequest></litleRequest>'
+              ssl_socket.puts li
             end
             File.rename(path + filename, path + filename + '.sent')
             File.open(path + 'responses/' + (filename + '.asc.received').gsub("request", "response"), 'a+') do |fo|
-              fo.puts(socket.read)
+              while line = ssl_socket.gets
+                fo.puts(line)
+              end
             end
-               
+          ssl_socket.close
+          #exit 0
         end
       end    
     end
@@ -463,6 +509,7 @@ module LitleOnline
     # Called when you wish to finish adding batches to your request, this method rewrites the aggregate
     # batch file to the final LitleRequest xml doc with the appropos LitleRequest tags.
     def finish_request
+      puts @path_to_request
       File.open(@path_to_request, 'w') do |f|
         #jam dat header in there
         f.puts(build_request_header())
