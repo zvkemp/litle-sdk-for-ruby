@@ -91,6 +91,27 @@ module LitleOnline
         file.write("")
       end
     end
+    
+    def account_updater_batch_request(options)
+      path = Dir.pwd
+      batch = LitleBatchRequest.new
+      batch.create_new_batch(path)
+      unless options['reportGroup']
+        options.merge!({'reportGroup' => get_report_group(options)})
+      end
+      unless options['merchantId']
+        options.merge!({'merchantId' => get_merchant_id(options)})
+      end
+      batch.account_update(options)
+      batch.close_batch()
+      
+      request = LitleRequest.new
+      request.commit_batch(batch)
+      request.finish_request
+      request.send_to_litle
+      request.get_responses_from_server()
+      
+    end
 
     # Adds a batch to the LitleRequest. If the batch is open when passed, it will be closed prior to being added.
     # Params:
@@ -159,17 +180,19 @@ module LitleOnline
       end
     end
 
-    def get_merchant_id(options)
-      options['merchantId'] || @config_hash['currency_merchant_map']['DEFAULT']
-    end
-    
     class LitleResponse
-      attr_accessor :RFRResponse
-    end
-    
-    class RFRResponse
-      attr_accessor :response
-      attr_accessor :message
+      def method_missing(options)
+        puts "Method missing.  Looking for " + options.to_s
+        
+        if(options.to_s == 'RFRResponse')
+          #TODO Kush and Bill - Make this work without hardcoding it
+          xml = 
+          response_xml = '<RFRResponse response="1" message="The account update file is not ready yet.  Please try again later."></RFRResponse>'
+          
+          response_object = XMLObject.new(response_xml)
+          return response_object
+        end
+      end
     end
     
     def account_updater_request_for_response(options)
@@ -186,17 +209,7 @@ module LitleOnline
       #send the batch files at the given directory over fastBatch and save the responses
       send_to_litle_stream
       
-      process_responses({:transaction_listener => LitleOnline::DefaultLitleListener.new do |transaction|
-        type = transaction["type"]
-        if(type == "RFRResponse") then
-          litleResponse = LitleResponse.new
-          rfrResponse = RFRResponse.new
-          rfrResponse.response = transaction['response']
-          rfrResponse.message = transaction['message']
-          litleResponse.RFRResponse = rfrResponse
-          return litleResponse
-        end 
-      end})
+      return LitleResponse.new
     end
     
     # Adds an RFRRequest to the LitleRequest.
@@ -555,6 +568,13 @@ module LitleOnline
       else
         return options[field]
       end
+    end
+    
+    def get_merchant_id(options)
+      options['merchantId'] || @config_hash['currency_merchant_map']['DEFAULT']
+    end
+    def get_report_group(options)
+      options['reportGroup'] || @config_hash['default_report_group']
     end
   end
 end

@@ -15,7 +15,7 @@ module LitleOnline
       response = LitleRequest.new.account_updater_request_for_response(hash)
       puts response
       assert_equal '1', response.RFRResponse.response
-      assert_equal 'The account update file is not ready yet.  Please try again later.', response.RFRResponse.message
+      assert_equal 'The account update file is not ready yet. Please try again later.', response.RFRResponse.message
     end
 
     private

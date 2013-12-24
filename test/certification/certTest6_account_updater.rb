@@ -1,11 +1,14 @@
 require 'lib/LitleOnline'
-
-#require 'Litle_activemerchant'
+require 'lib/LitleRequest'
 require 'test/unit'
-require 'test/shared/data'
 
 module LitleOnline
   class Litle_certTest6 < Test::Unit::TestCase
+    def self.real_certification_hash
+      {
+        'url' => 'https://cert.litle.com:15000'
+      }
+    end
     def test_batch_request_account_updater_transactions
       customer_hash = {
         'batchRequest' => {
@@ -133,7 +136,7 @@ module LitleOnline
           ]
         }
       }
-      hash = customer_hash.merge(TestSharedData.real_certification_hash)
+      hash = customer_hash.merge(Litle_certTest6.real_certification_hash)
       response = LitleRequest.new.account_updater_batch_request(hash)
       customer_hash['batchRequest']['accountUpdate'].each_with_index do |order, i|
         assert_equal(order['orderId'], response.batchResponse.accountUpdateResponse[i].orderId)
