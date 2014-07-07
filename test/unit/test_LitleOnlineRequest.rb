@@ -22,8 +22,8 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 =end
-require 'lib/LitleOnline'
-require 'lib/LitleOnlineRequest'
+require_relative '../../lib/LitleOnline'
+#require_relative '../../lib/LitleOnlineRequest'
 require 'test/unit'
 require 'mocha/setup'
 
@@ -36,7 +36,7 @@ module LitleOnline
       assert_equal '2', litle.send(:get_merchant_id, {'merchantId'=>'2'})
       assert_equal '1', litle.send(:get_merchant_id, {'NotMerchantId'=>'2'})
     end
-  
+
     def test_simple
       Configuration.any_instance.stubs(:config).returns({'currency_merchant_map'=>{'DEFAULT'=>'1'}, 'user'=>'a','password'=>'b','version'=>'8.10'})
       hash = {
@@ -244,7 +244,7 @@ module LitleOnline
       #Explicit - used for integrations
       assert_equal 'ActiveMerchant;3.2', litle.send(:get_merchant_sdk, {'merchantSdk'=>'ActiveMerchant;3.2'})
       #Implicit - used raw when nothing is specified
-      assert_equal 'Ruby;8.25.0', litle.send(:get_merchant_sdk, {'NotMerchantSdk'=>'ActiveMerchant;3.2'})
+      assert_equal 'Ruby;9.00.0', litle.send(:get_merchant_sdk, {'NotMerchantSdk'=>'ActiveMerchant;3.2'})
     end
   
     def test_sale_paypal_order_complete_typo
@@ -274,7 +274,7 @@ module LitleOnline
         'litleTxnId' => '006'
       }
 
-      Communications.expects(:http_post).with(regexp_matches(/<litleOnlineRequest.*version="8\.25".*/m),kind_of(Hash))
+      Communications.expects(:http_post).with(regexp_matches(/<litleOnlineRequest.*version="9\.00".*/m),kind_of(Hash))
       XMLObject.expects(:new)
  
       response = LitleOnlineRequest.new.void(hash)

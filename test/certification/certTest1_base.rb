@@ -1,4 +1,4 @@
-require 'lib/LitleOnline'
+require_relative '../../lib/LitleOnline'
 
 #require 'Litle_activemerchant'
 require 'test/unit'

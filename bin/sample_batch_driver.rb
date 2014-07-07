@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 =begin
 Copyright (c) 2011 Litle & Co.
 

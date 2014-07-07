@@ -22,9 +22,9 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 =end
-require 'lib/LitleOnline'
+require '../../lib/LitleOnline'
 require 'test/unit'
-
+require 'mocha/setup'
 module LitleOnline
   class Test_echeckVoid < Test::Unit::TestCase
     def test_echeck_void
