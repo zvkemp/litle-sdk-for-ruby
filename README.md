@@ -71,7 +71,6 @@ Test
 For unit test, you need to download the mocha gem. 
 go to root,
 gem install mocha
------
 
  
 More examples (including batch processing with sFTP) can be found here [Ruby Gists](https://gist.github.com/litleSDK)
