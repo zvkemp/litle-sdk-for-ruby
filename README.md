@@ -66,6 +66,8 @@ puts "Litle Transaction ID: "+ response.saleResponse.litleTxnId
     Message: Valid Format
     Litle Transaction ID: <your-numeric-litle-txn-id>
 Test
+-----
+
 For unit test, you need to download the mocha gem. 
 go to root,
 gem install mocha
