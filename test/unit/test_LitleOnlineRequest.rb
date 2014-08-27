@@ -22,8 +22,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 =end
-require_relative '../../lib/LitleOnline'
-#require_relative '../../lib/LitleOnlineRequest'
+require File.expand_path("../../../lib/LitleOnline",__FILE__) 
 require 'test/unit'
 require 'mocha/setup'
 
@@ -36,7 +35,7 @@ module LitleOnline
       assert_equal '2', litle.send(:get_merchant_id, {'merchantId'=>'2'})
       assert_equal '1', litle.send(:get_merchant_id, {'NotMerchantId'=>'2'})
     end
-
+  
     def test_simple
       Configuration.any_instance.stubs(:config).returns({'currency_merchant_map'=>{'DEFAULT'=>'1'}, 'user'=>'a','password'=>'b','version'=>'8.10'})
       hash = {
