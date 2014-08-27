@@ -4,6 +4,7 @@
 * Feature : support Version 9.0
 
 == version 8.27.0(August 27, 2014)
+* Feature : Added Env variables to setup ruby config
 * Feature : Added samples for all kinds of transactions
 
 == version 8.25.0 (March 17, 2014)
