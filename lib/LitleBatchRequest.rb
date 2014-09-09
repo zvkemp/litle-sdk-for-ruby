@@ -133,11 +133,12 @@ module LitleOnline
       File.rename(@path_to_batch, @path_to_batch + '.closed-' + @txn_counts[:total].to_s)
       @path_to_batch = @path_to_batch + '.closed-' + @txn_counts[:total].to_s
       File.open(@path_to_batch, 'w') do |fo|
-        fo.puts header
+        put_header = !au_batch? || has_transactions?
+        fo.puts header if put_header
         File.foreach(txn_location) do |li|
           fo.puts li
         end
-        fo.puts('</batchRequest>')
+        fo.puts('</batchRequest>') if put_header
       end
       File.delete(txn_location)
       if(@au_batch != nil) then
@@ -175,6 +176,14 @@ module LitleOnline
       @txn_counts[:authReversal][:authReversalAmount] += options['amount'].to_i
       
       add_txn_to_batch(transaction, :authReversal, options)
+    end
+     
+    def has_transactions?
+      !@txn_counts[:total].eql?(0)
+    end
+    
+    def au_batch?
+      !@au_batch.nil?
     end
 
     def cancel_subscription(options)
